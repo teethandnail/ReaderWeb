@@ -1,3 +1,11 @@
+// 手动输入文字展示
+document.getElementById('showTextBtn').addEventListener('click', () => {
+    const text = document.getElementById('textInput').value;
+    if (!text.trim()) return;
+    localStorage.setItem('readerText', text);
+    window.open('reader.html', '_blank');
+});
+
 // 初始化 PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
 

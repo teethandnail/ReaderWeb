@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>阅读</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #fafafa;
+            color: #222;
+            font-family: Georgia, "Noto Serif SC", serif;
+            line-height: 1.9;
+        }
+
+        #readerContent {
+            max-width: 680px;
+            margin: 4rem auto;
+            padding: 0 1.5rem 6rem;
+            font-size: 1.1rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <div id="readerContent"></div>
+    <script>
+        const text = localStorage.getItem('readerText');
+        if (text) {
+            document.getElementById('readerContent').textContent = text;
+        }
+    </script>
+</body>
+</html>
