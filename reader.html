@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>阅读</title>
     <style>
+        :root {
+            --reader-ink: #22201d;
+            --reader-muted: #6f675f;
+            --reader-soft: #f3efe8;
+            --reader-rule: #e4ddd2;
+            --reader-accent: #9d7641;
+            --reader-code: #eee7dc;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,19 +21,162 @@
         }
 
         body {
-            background-color: #fafafa;
-            color: #222;
+            background-color: #fbfaf7;
+            color: var(--reader-ink);
             font-family: Georgia, "Noto Serif SC", serif;
-            line-height: 1.9;
+            line-height: 1.85;
         }
 
         #readerContent {
-            max-width: 680px;
+            width: min(760px, calc(100% - 40px));
             margin: 4rem auto;
-            padding: 0 1.5rem 6rem;
-            font-size: 1.1rem;
-            white-space: pre-wrap;
+            padding: 0 0 6rem;
+            font-size: 1.08rem;
             word-break: break-word;
+        }
+
+        #readerContent > * + * {
+            margin-top: 1rem;
+        }
+
+        #readerContent h1,
+        #readerContent h2,
+        #readerContent h3,
+        #readerContent h4,
+        #readerContent h5,
+        #readerContent h6 {
+            color: #171512;
+            font-weight: 700;
+            line-height: 1.35;
+            letter-spacing: 0;
+        }
+
+        #readerContent h1 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            margin-bottom: 2.2rem;
+            padding-bottom: 1.1rem;
+            border-bottom: 1px solid var(--reader-rule);
+        }
+
+        #readerContent h2 {
+            font-size: clamp(1.45rem, 3vw, 1.9rem);
+            margin-top: 3rem;
+            padding-top: 0.2rem;
+        }
+
+        #readerContent h3 {
+            font-size: 1.25rem;
+            margin-top: 2.1rem;
+        }
+
+        #readerContent h4,
+        #readerContent h5,
+        #readerContent h6 {
+            font-size: 1.08rem;
+            margin-top: 1.7rem;
+        }
+
+        #readerContent p {
+            margin-top: 1.05rem;
+        }
+
+        #readerContent blockquote {
+            margin: 1.3rem 0 2.2rem;
+            padding: 0.95rem 1.1rem;
+            color: var(--reader-muted);
+            background: var(--reader-soft);
+            border-left: 4px solid var(--reader-accent);
+            border-radius: 4px;
+        }
+
+        #readerContent blockquote > * + * {
+            margin-top: 0.55rem;
+        }
+
+        #readerContent blockquote p {
+            margin-top: 0;
+        }
+
+        #readerContent ul,
+        #readerContent ol {
+            margin: 1.05rem 0 1.35rem;
+            padding-left: 1.8rem;
+        }
+
+        #readerContent li {
+            padding-left: 0.25rem;
+            margin-top: 0.45rem;
+        }
+
+        #readerContent li::marker {
+            color: var(--reader-accent);
+            font-weight: 700;
+        }
+
+        #readerContent strong {
+            font-weight: 700;
+            color: #16130f;
+        }
+
+        #readerContent em {
+            color: var(--reader-muted);
+        }
+
+        #readerContent code {
+            padding: 0.12em 0.34em;
+            border-radius: 4px;
+            background: var(--reader-code);
+            color: #4b3926;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+            font-size: 0.88em;
+        }
+
+        #readerContent pre {
+            margin: 1.35rem 0;
+            padding: 1rem 1.1rem;
+            overflow-x: auto;
+            border: 1px solid var(--reader-rule);
+            border-radius: 6px;
+            background: #f7f2ea;
+            line-height: 1.65;
+        }
+
+        #readerContent pre code {
+            padding: 0;
+            background: transparent;
+            color: inherit;
+        }
+
+        #readerContent hr {
+            margin: 2.5rem 0;
+            border: 0;
+            border-top: 1px solid var(--reader-rule);
+        }
+
+        #readerContent a {
+            color: #7e5b2f;
+            text-decoration-thickness: 1px;
+            text-underline-offset: 0.18em;
+        }
+
+        @media (max-width: 640px) {
+            body {
+                line-height: 1.78;
+            }
+
+            #readerContent {
+                width: min(100% - 28px, 760px);
+                margin-top: 2rem;
+                font-size: 1rem;
+            }
+
+            #readerContent h1 {
+                margin-bottom: 1.6rem;
+            }
+
+            #readerContent h2 {
+                margin-top: 2.2rem;
+            }
         }
     </style>
 </head>
@@ -32,8 +184,156 @@
     <div id="readerContent"></div>
     <script>
         const text = localStorage.getItem('readerText');
+
+        function escapeHtml(value) {
+            return value
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function renderInline(value) {
+            const placeholders = [];
+            let html = escapeHtml(value);
+
+            html = html.replace(/`([^`]+)`/g, (_, code) => {
+                const key = `@@CODE${placeholders.length}@@`;
+                placeholders.push(`<code>${code}</code>`);
+                return key;
+            });
+
+            html = html
+                .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>')
+                .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+                .replace(/__([^_]+)__/g, '<strong>$1</strong>')
+                .replace(/(^|[^\*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+                .replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
+
+            placeholders.forEach((item, index) => {
+                html = html.replace(`@@CODE${index}@@`, item);
+            });
+
+            return html;
+        }
+
+        function renderParagraph(lines) {
+            return `<p>${renderInline(lines.join(' '))}</p>`;
+        }
+
+        function renderMarkdown(markdown) {
+            const lines = markdown.replace(/\r\n?/g, '\n').split('\n');
+            const html = [];
+            let paragraph = [];
+            let list = null;
+            let blockquote = [];
+            let codeBlock = null;
+
+            function flushParagraph() {
+                if (paragraph.length) {
+                    html.push(renderParagraph(paragraph));
+                    paragraph = [];
+                }
+            }
+
+            function flushList() {
+                if (list) {
+                    html.push(`<${list.type}>${list.items.map((item) => `<li>${renderInline(item)}</li>`).join('')}</${list.type}>`);
+                    list = null;
+                }
+            }
+
+            function flushBlockquote() {
+                if (blockquote.length) {
+                    html.push(`<blockquote>${renderMarkdown(blockquote.join('\n'))}</blockquote>`);
+                    blockquote = [];
+                }
+            }
+
+            for (const line of lines) {
+                const trimmed = line.trim();
+
+                if (codeBlock) {
+                    if (/^```/.test(trimmed)) {
+                        html.push(`<pre><code>${escapeHtml(codeBlock.lines.join('\n'))}</code></pre>`);
+                        codeBlock = null;
+                    } else {
+                        codeBlock.lines.push(line);
+                    }
+                    continue;
+                }
+
+                if (/^```/.test(trimmed)) {
+                    flushParagraph();
+                    flushList();
+                    flushBlockquote();
+                    codeBlock = { lines: [] };
+                    continue;
+                }
+
+                if (!trimmed) {
+                    flushParagraph();
+                    flushList();
+                    flushBlockquote();
+                    continue;
+                }
+
+                const quoteMatch = line.match(/^\s*>\s?(.*)$/);
+                if (quoteMatch) {
+                    flushParagraph();
+                    flushList();
+                    blockquote.push(quoteMatch[1]);
+                    continue;
+                }
+
+                flushBlockquote();
+
+                const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+                if (headingMatch) {
+                    flushParagraph();
+                    flushList();
+                    const level = headingMatch[1].length;
+                    html.push(`<h${level}>${renderInline(headingMatch[2])}</h${level}>`);
+                    continue;
+                }
+
+                if (/^(-{3,}|\*{3,}|_{3,})$/.test(trimmed)) {
+                    flushParagraph();
+                    flushList();
+                    html.push('<hr>');
+                    continue;
+                }
+
+                const unorderedMatch = line.match(/^\s*[-*+]\s+(.+)$/);
+                const orderedMatch = line.match(/^\s*\d+[.)]\s+(.+)$/);
+                if (unorderedMatch || orderedMatch) {
+                    flushParagraph();
+                    const type = unorderedMatch ? 'ul' : 'ol';
+                    if (!list || list.type !== type) {
+                        flushList();
+                        list = { type, items: [] };
+                    }
+                    list.items.push((unorderedMatch || orderedMatch)[1]);
+                    continue;
+                }
+
+                flushList();
+                paragraph.push(trimmed);
+            }
+
+            if (codeBlock) {
+                html.push(`<pre><code>${escapeHtml(codeBlock.lines.join('\n'))}</code></pre>`);
+            }
+            flushParagraph();
+            flushList();
+            flushBlockquote();
+
+            return html.join('\n');
+        }
+
         if (text) {
-            document.getElementById('readerContent').textContent = text;
+            document.getElementById('readerContent').innerHTML = renderMarkdown(text);
         }
     </script>
 </body>
